@@ -1,1 +1,1 @@
-web: node app.js
+web: pscale connect animals dev --execute npm run dev
