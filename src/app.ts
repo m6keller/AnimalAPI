@@ -52,21 +52,41 @@ app.get('/update', (req: Request, res: Response) => {
 });
 
 
-app.get( "/api/animals", (req: Request, res: Response ) => {
+app.get( "/api/animals", (req: Request, res: Response, next ) => {
     const query = "SELECT * FROM Animal_Data";
     connection.query( query, (err, rows) => {
         if( err ) throw err;
+        if( rows.length === 0 ) {
+            next(ApiError.badRequest("no animal records in the database"));
+            return;
+        }
         return res.send( rows );
     })
 });
 
-app.get( "/api/animals/:name", (req: Request, res: Response, next ) => {
-    var name = req.params.name;
+app.get( "/api/animals/name/:name", (req: Request, res: Response, next ) => {
+    const name = req.params.name;
     const query = "SELECT * FROM Animal_Data WHERE name = \"" + name + "\"";
     connection.query( query, (err, rows) => {
         if( err ) throw err;
         if( rows.length === 0 ) {
             next(ApiError.badRequest("no record of this animal in the database"));
+            return;
+        }
+        return res.send( rows );
+    });
+    return res.redirect( '/' );
+});
+
+app.get( "/api/animals/id/:id", (req: Request, res: Response, next ) => {
+    const id = req.params.id;
+    const query = "SELECT * FROM Animal_Data WHERE id = " + id;
+    connection.query( query, (err, rows) => {
+        if( err ) throw err;
+        if( rows.length === 0 ) {
+            console.log(rows);
+            console.log(rows.length);
+            next(ApiError.badRequest("No animal with id " + id + " exists in the database"));
             return;
         }
         return res.send( rows );
@@ -153,30 +173,7 @@ app.get('/delete/id/:id', function(req, res, next) {
     });
     res.redirect('/');
 });
- 
-// // error handler
-// app.use(function(err, req, res, next) {
-//     // set locals, only providing error in development
-//     res.locals.message = err.message;
-//     res.locals.error = req.app.get('env') === 'development' ? err : {};
-   
-//     // render the error page
-//     res.status(err.status || 500);
-//     res.render('error');
-//   });
 
-app.get ( "/api/animals/:id", (req: Request, res: Response ) => {
-    const id = req.params.id;
-    const query = "SELECT * FROM Animal_Data WHERE ID = " + id + " LIMIT 1";
-    connection.query( query, (err, rows) => {
-        if( err ) throw err;
-        const animal = {
-            data: rows.length > 0 ? rows[0] : null,
-            message: rows.length === 0 ? "No record" : ""
-        }
-        return res.send( animal );
-    })
-});
 
 app.get( "/about", (req: Request, res: Response ) => {
     res.send( "This is an API for Reya Co-op Application" );
